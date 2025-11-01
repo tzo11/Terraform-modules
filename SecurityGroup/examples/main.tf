@@ -1,5 +1,5 @@
 module "web_sg" {
-  source = "../"
+  source = "git@github.com:tzo11/Terraform-modules.git//SecurityGroup?ref=sg-v1.0.0"
   
   aws_region     = var.aws_region
   sg_name        = var.sg_name

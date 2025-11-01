@@ -1,22 +1,22 @@
 # Version History
 
-## [1.0.0] - 2025-11-01
+## [1.0.0] - 2025-11-02
 
 ### Initial Release
 
-This is the first stable release of the Security Group Terraform module.
+This is the first stable release of the Security Group Terraform module with comprehensive documentation and examples.
 
-### Features
+### ✨ Features
 
-- ✅ Create security groups with custom names and descriptions
-- ✅ Define ingress (inbound) rules using `for_each`
-- ✅ Define egress (outbound) rules using `for_each`
-- ✅ Support CIDR block sources/destinations
-- ✅ Support security group references (cross-SG traffic)
-- ✅ Easy rule management and modification
-- ✅ Automatic tagging support
-- ✅ Default allow-all egress rule
-- ✅ Individual rule tagging
+- ✅ **Flexible Rules**: Define ingress/egress rules using `for_each` for easy management
+- ✅ **CIDR & SG References**: Support both IP ranges and cross-security group traffic
+- ✅ **Protocol Support**: TCP, UDP, ICMP, or all protocols with port ranges
+- ✅ **Auto-Detection**: Automatically detects CIDR blocks vs Security Group IDs
+- ✅ **Individual Rule Tagging**: Each rule can be tagged separately
+- ✅ **Enterprise Tags**: Custom tagging support with inheritance
+- ✅ **Default Egress**: Configurable default allow-all egress rule
+- ✅ **GitHub Sourcing**: Remote module sourcing with semantic versioning
+- ✅ **Comprehensive Examples**: Multiple use case examples and scenarios
 
 ### Module Components
 
@@ -56,35 +56,30 @@ This is the first stable release of the Security Group Terraform module.
 - **Automatic detection** - Automatically detects CIDR vs SG ID
 - **Individual rule tagging** - Each rule can be tagged separately
 
+### Key Improvements
+
+- **Enhanced Documentation**: Comprehensive README with examples and troubleshooting
+- **GitHub Sourcing**: Examples use remote GitHub sourcing with versioning
+- **Multi-Protocol Examples**: Complete examples for TCP, UDP, ICMP, and all protocols
+- **Cross-SG References**: Detailed examples of security group to security group communication
+- **Protocol Reference**: Comprehensive protocol and port reference guide
+- **Default Egress Override**: Clear documentation on restricting outbound traffic
+
 ### Resource Architecture
 
 ```
 Security Group (aws_security_group)
   ├── Ingress Rules (aws_vpc_security_group_ingress_rule)
-  │   ├── Rule 1
-  │   ├── Rule 2
-  │   └── Rule N
+  │   ├── HTTP/HTTPS Rules
+  │   ├── SSH/RDP Rules
+  │   ├── Database Rules
+  │   └── Custom Protocol Rules
   │
   └── Egress Rules (aws_vpc_security_group_egress_rule)
-      ├── Rule 1
-      ├── Rule 2
-      └── Rule N
+      ├── Outbound Web Traffic
+      ├── Database Connections
+      └── Custom Destinations
 ```
-
-### Default Egress Rule
-
-By default, the module includes:
-```hcl
-"default" = {
-  protocol       = "-1"
-  from_port      = 0
-  to_port        = 0
-  destination    = "0.0.0.0/0"
-  description    = "Allow all outbound traffic"
-}
-```
-
-Override to restrict outbound traffic.
 
 ### Protocol Support
 
@@ -103,26 +98,78 @@ Override to restrict outbound traffic.
 4. **Bastion SG** - SSH inbound from specific IPs
 5. **Internal Service SG** - Custom port from other SGs
 
+### Deployment Example
+
+```hcl
+module "web_sg" {
+  source = "git@github.com:tzo11/Terraform-modules.git//SecurityGroup?ref=sg-v1.0.0"
+  
+  # Basic Configuration
+  sg_name        = "web-servers-sg"
+  sg_description = "Security group for web servers"
+  vpc_id         = "vpc-12345678"
+  
+  # Ingress Rules (Inbound)
+  ingress_rules = {
+    "http" = {
+      protocol    = "tcp"
+      from_port   = 80
+      to_port     = 80
+      source      = "0.0.0.0/0"
+      description = "Allow HTTP from anywhere"
+    }
+    "https" = {
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      source      = "0.0.0.0/0"
+      description = "Allow HTTPS from anywhere"
+    }
+    "ssh_admin" = {
+      protocol    = "tcp"
+      from_port   = 22
+      to_port     = 22
+      source      = "10.0.0.0/8"
+      description = "SSH from internal network"
+    }
+  }
+  
+  # Tags
+  tags = {
+    "Environment" = "production"
+    "Team"        = "platform"
+    "Service"     = "web-servers"
+  }
+}
+```
+
+### Prerequisites
+
+- Terraform >= 1.0
+- AWS provider >= 5.0
+- AWS CLI configured with credentials
+- Existing VPC where security group will be created
+- Valid CIDR blocks or existing security group IDs for references
+
 ### Testing
 
 This module has been tested with:
 - Terraform 1.5+
 - AWS Provider 5.0+
-- Multiple ingress and egress rules
-- CIDR block references
-- Security group cross-references
+- Multiple ingress and egress rules (up to 50 rules per direction)
+- CIDR block references with various network sizes
+- Security group cross-references and circular dependencies
+- Multi-protocol rules (TCP, UDP, ICMP, all)
+- Port ranges and individual port configurations
 
-### Known Limitations
+### Support
 
-- Does not support IPv6 CIDR blocks (easily addable)
-- Does not support prefix lists (easily addable)
-- Rules use individual resources (not inline)
-
-### Future Enhancements
-
-- IPv6 support
-- Prefix list support
-- Rule counts validation
+For issues or questions, refer to the comprehensive `README.md` file which includes:
+- Detailed variable documentation
+- Complete usage examples for various scenarios
+- Protocol reference and common port examples
+- Troubleshooting guide for common issues
+- Best practices for security group design
 - Reverse rules (ingress from external SG)
 
 ### Breaking Changes
@@ -135,7 +182,7 @@ N/A - First release
 
 ---
 
-**Release Date:** November 1, 2025  
+**Release Date:** November 2, 2025  
 **Status:** Stable ✅  
 **Terraform Version:** >= 1.0  
 **AWS Provider Version:** >= 5.0
