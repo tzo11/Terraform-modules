@@ -1,13 +1,11 @@
 # EC2 Module - Examples
 
-This folder contains example configurations for using the EC2 module.
+This folder contains example configurations for using the EC2 module with tfvars and proper variable passing.
 
 ## Files Included
 
 ### 1. `terraform.tfvars`
-**Purpose:** Example variable values for the EC2 module
-
-**What it shows:**
+Example variable values showing:
 - AWS region configuration
 - Instance count and type
 - VPC, subnet, and security group setup
@@ -17,144 +15,45 @@ This folder contains example configurations for using the EC2 module.
 - User data script setup
 - Mandatory tags
 
-**How to use:**
-1. Copy to your root directory
-2. Update values to match your environment
-3. Replace placeholder IDs (vpc-*, subnet-*, sg-*) with real values
+### 2. `main.tf`
+Module call that passes variables from tfvars to the EC2 module
 
-### 2. `backend.tf`
-**Purpose:** Different backend configurations for Terraform state management
+### 3. `variables.tf`
+Variable definitions that receive values from terraform.tfvars and pass to module
 
-**Options included:**
-- **S3 Backend** (Recommended for production)
-- **Local Backend** (Development only)
-- **Azure Backend**
-- **Terraform Cloud**
-- **Google Cloud Storage**
+### 4. `output.tf`
+Exports key outputs from the module (instance IDs, IPs, instance details)
 
-**How to use:**
-1. Choose the appropriate backend for your use case
-2. Copy the relevant section to your root directory as `backend.tf`
-3. Replace placeholder values (bucket names, resource groups, etc.)
-4. Run `terraform init` to initialize the backend
+### 5. `backend.tf`
+Backend configurations for Terraform state management
 
-### 3. `user_data.sh`
-**Purpose:** Example initialization script for Linux EC2 instances
+### 6. `user_data.sh`
+Example initialization script for Linux EC2 instances
 
-**What it does:**
-- Updates system packages
-- Installs Docker
-- Installs Docker Compose
-- Installs CloudWatch Agent
-- Creates application directory
-- Logs output to `/var/log/user-data.log`
+### 7. `user_data.ps1`
+Example initialization script for Windows EC2 instances
 
-**How to use:**
-1. Copy to your root directory
-2. Customize for your needs (add your scripts, installations, etc.)
-3. Reference in `terraform.tfvars`:
-   ```hcl
-   user_data = file("${path.module}/user_data.sh")
-   ```
+## Quick Start
 
-### 4. `user_data.ps1`
-**Purpose:** Example initialization script for Windows EC2 instances
-
-**What it does:**
-- Updates Windows patches
-- Installs Chocolatey (package manager)
-- Installs Docker, Git, VSCode, and utilities
-- Configures Windows Firewall
-- Enables Remote Desktop
-- Creates application directory
-
-**How to use:**
-1. Copy to your root directory
-2. Customize for your needs
-3. Reference in `terraform.tfvars`:
-   ```hcl
-   user_data_base64 = base64encode(file("${path.module}/user_data.ps1"))
-   ```
-
----
-
-## Quick Start Guide
-
-### Step 1: Prepare Your Environment
+### Step 1: Copy All Example Files to Root Directory
 
 ```bash
-# Clone or download the Terraform module
-git clone <repo-url>
-cd Terraform
+cp examples/* .
 ```
 
-### Step 2: Copy Example Files
+### Step 2: Update terraform.tfvars
 
-```bash
-# Copy configuration files to root
-cp examples/terraform.tfvars .
-cp examples/backend.tf .
-cp examples/user_data.sh .
-
-# Or for Windows
-copy examples\terraform.tfvars .
-copy examples\backend.tf .
-copy examples\user_data.sh .
-```
-
-### Step 3: Create Module Reference
-
-Create `main.tf` in root directory:
-
+Replace placeholder values with your actual values:
 ```hcl
-module "ec2_instances" {
-  source = "./EC2"
-  
-  aws_region           = var.aws_region
-  instance_count       = var.instance_count
-  instance_type        = var.instance_type
-  ami_id               = var.ami_id
-  instance-prefix      = var.instance-prefix
-  vpc_id               = var.vpc_id
-  subnet_ids           = var.subnet_ids
-  security_group_ids   = var.security_group_ids
-  iam_instance_profile = var.iam_instance_profile
-  root_volume_size     = var.root_volume_size
-  root_volume_type     = var.root_volume_type
-  additional_volumes   = var.additional_volumes
-  placement_group      = var.placement_group
-  user_data            = var.user_data
-  user_data_base64     = var.user_data_base64
-  mandatory_tags       = var.mandatory_tags
+vpc_id = "vpc-12345678"        # Your actual VPC ID
+subnet_ids = {
+  "0" = "subnet-12345678"      # Your actual subnet IDs
+  "1" = "subnet-87654321"
 }
+security_group_ids = ["sg-12345678"]  # Your actual security group ID
 ```
 
-### Step 4: Create Variables File
-
-Create `variables.tf` in root directory (pass-through variables):
-
-```hcl
-variable "aws_region" {
-  type = string
-}
-
-variable "instance_count" {
-  type = number
-}
-
-# ... add other variables ...
-```
-
-### Step 5: Customize Configuration
-
-Edit `terraform.tfvars`:
-- Replace `vpc-12345678` with your VPC ID
-- Replace `subnet-12345678` with your subnet IDs
-- Replace `sg-12345678` with your security group ID
-- Update tags with your values
-- Customize user data scripts
-
-### Step 6: Initialize and Deploy
+### Step 3: Deploy
 
 ```bash
 # Initialize Terraform
@@ -165,9 +64,80 @@ terraform plan -var-file=terraform.tfvars
 
 # Apply the configuration
 terraform apply -var-file=terraform.tfvars
+```
 
-# Destroy resources (when no longer needed)
-terraform destroy -var-file=terraform.tfvars
+## How It Works
+
+### Data Flow
+```
+terraform.tfvars (values) → variables.tf (definitions) → main.tf (module call) → EC2 module
+```
+
+### Example Flow
+1. `terraform.tfvars` provides: `instance_count = 2`
+2. `variables.tf` defines: `variable "instance_count" { type = number }`
+3. `main.tf` passes: `instance_count = var.instance_count`
+4. EC2 module receives: `instance_count = 2`
+
+## Multiple Environments
+
+Create different tfvars files for different environments:
+
+**dev.tfvars:**
+```hcl
+instance_count = 1
+instance_type  = "t3.micro"
+mandatory_tags = {
+  Environment = "development"
+  # ... other tags
+}
+```
+
+**prod.tfvars:**
+```hcl
+instance_count = 3
+instance_type  = "t3.large"
+mandatory_tags = {
+  Environment = "production"
+  # ... other tags
+}
+```
+
+Deploy with:
+```bash
+# Development
+terraform apply -var-file=dev.tfvars
+
+# Production
+terraform apply -var-file=prod.tfvars
+```
+
+## User Data Scripts
+
+### Linux Script Usage
+Reference in terraform.tfvars:
+```hcl
+user_data = file("${path.module}/user_data.sh")
+```
+
+### Windows Script Usage
+Reference in terraform.tfvars:
+```hcl
+user_data_base64 = base64encode(file("${path.module}/user_data.ps1"))
+```
+
+## Accessing Outputs
+
+After deployment, access the outputs:
+```bash
+# Get instance IDs
+terraform output instance_ids
+
+# Get private IPs
+terraform output private_ips
+
+# Get all outputs
+terraform output
 ```
 
 ---
