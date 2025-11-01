@@ -1,5 +1,5 @@
 module "ec2_instances" {
-  source = "../"
+  source = "git@github.com:tzo11/Terraform-modules.git//EC2?ref=ec2-v1.0.1"
   
   aws_region           = var.aws_region
   instance_count       = var.instance_count

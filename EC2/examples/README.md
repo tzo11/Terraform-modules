@@ -16,7 +16,7 @@ Example variable values showing:
 - Mandatory tags
 
 ### 2. `main.tf`
-Module call that passes variables from tfvars to the EC2 module
+Module call that sources the EC2 module from GitHub and passes variables from tfvars to the module
 
 ### 3. `variables.tf`
 Variable definitions that receive values from terraform.tfvars and pass to module
@@ -40,6 +40,8 @@ Example initialization script for Windows EC2 instances
 ```bash
 cp examples/* .
 ```
+
+**Note:** Since the module sources from GitHub, you don't need the local EC2 folder. Terraform will download it automatically.
 
 ### Step 2: Update terraform.tfvars
 
@@ -68,16 +70,27 @@ terraform apply -var-file=terraform.tfvars
 
 ## How It Works
 
+### Module Source
+The module is sourced from GitHub using SSH:
+```hcl
+source = "git@github.com:tzo11/Terraform-modules.git//EC2?ref=ec2-v1.0.1"
+```
+
+- **Repository:** `git@github.com:tzo11/Terraform-modules.git`
+- **Path:** `//EC2` (module is in EC2 folder)
+- **Version:** `?ref=ec2-v1.0.1` (specific git tag)
+
 ### Data Flow
 ```
-terraform.tfvars (values) → variables.tf (definitions) → main.tf (module call) → EC2 module
+terraform.tfvars (values) → variables.tf (definitions) → main.tf (GitHub module call) → EC2 module
 ```
 
 ### Example Flow
 1. `terraform.tfvars` provides: `instance_count = 2`
 2. `variables.tf` defines: `variable "instance_count" { type = number }`
 3. `main.tf` passes: `instance_count = var.instance_count`
-4. EC2 module receives: `instance_count = 2`
+4. Terraform downloads EC2 module from GitHub (version ec2-v1.0.1)
+5. EC2 module receives: `instance_count = 2`
 
 ## Multiple Environments
 
